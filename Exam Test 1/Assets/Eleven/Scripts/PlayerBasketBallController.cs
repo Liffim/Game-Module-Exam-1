@@ -1,23 +1,25 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerSix : MonoBehaviour
+public class PlayerBasketBallController : MonoBehaviour
 {
     public float speed = 10.0f;
     public float rotationSpeed = 70.0f;
     public float jumpForce = 10f;
-    private CubeGeneratorSix gridManager;
-
+    public GameObject basketballPrefab;
+    public float throwForce = 20f;
 
     private Rigidbody rb;
     private Vector2 movementAxis;
     private bool isGrounded;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezeRotationY;
-        gridManager = FindObjectOfType<CubeGeneratorSix>();
     }
+
     void Update()
     {
         UpdateMovementAxis();
@@ -25,59 +27,57 @@ public class PlayerSix : MonoBehaviour
         {
             Jump();
         }
+
+        if (Input.GetButtonDown("Fire1")) // Assuming Fire1 is left mouse click or the primary button
+        {
+            ThrowBasketball();
+        }
     }
+
     void Jump()
     {
         // Add force upwards for jumping
         rb.velocity = Vector3.up * jumpForce;
     }
+
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground") || collision.gameObject.CompareTag("Cube"))
+        if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = true;
         }
-
     }
+
     void OnCollisionExit(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground") || collision.gameObject.CompareTag("Cube"))
+        if (collision.gameObject.CompareTag("Ground"))
         {
             isGrounded = false;
         }
     }
-
 
     private void FixedUpdate()
     {
         UpdatePosition();
         UpdateRotation();
     }
+
     private void UpdateMovementAxis()
     {
         movementAxis.x = Input.GetAxis("Horizontal");
         movementAxis.y = Input.GetAxis("Vertical");
-
-        Debug.Log(movementAxis.x);
-        Debug.Log(movementAxis.y);
-        if (movementAxis.x != 0 || movementAxis.y != 0)
-        {
-            gridManager.RandomizeHeights();
-        }
     }
+
     private void UpdatePosition()
     {
         var position = transform.forward * (movementAxis.y * speed * Time.deltaTime);
 
         var currentPosition = rb.position;
         var newPosition = currentPosition + position;
-        if (newPosition != position)
-        {
-            gridManager.RandomizeHeights();
-        }
 
         rb.MovePosition(newPosition);
     }
+
     private void UpdateRotation()
     {
         var rotationMovement = movementAxis.x * rotationSpeed * Time.deltaTime;
@@ -87,7 +87,11 @@ public class PlayerSix : MonoBehaviour
         var newRotation = Quaternion.Euler(currentRotation);
         rb.MoveRotation(newRotation);
     }
-    
 
-
+    private void ThrowBasketball()
+    {
+        GameObject basketball = Instantiate(basketballPrefab, transform.position, Quaternion.identity);
+        Rigidbody basketballRb = basketball.GetComponent<Rigidbody>();
+        basketballRb.velocity = transform.forward * throwForce;
+    }
 }
